@@ -1,8 +1,16 @@
 #include "guikit/guikit.hpp"
 #include "guikit/cockpit.hpp"
+#if defined(GUIKIT_HAS_BACKEND_THORVG) && GUIKIT_HAS_BACKEND_THORVG
 #include "guikit/backend/thor_canvas.hpp"
+#endif
 #include "keel/keel.h"
 #include "keel/math.h"
+
+#if defined(GUIKIT_HAS_BACKEND_THORVG) && GUIKIT_HAS_BACKEND_THORVG
+using TestCanvas = guikit::ThorCanvas;
+#else
+using TestCanvas = guikit::NullCanvas;
+#endif
 
 static keel::i32 g_failures = 0;
 
@@ -28,7 +36,7 @@ using namespace guikit;
 void TestAttitudeViewWidgetWorkflow() {
     using namespace guikit;
     Context ui;
-    ThorCanvas canvas;
+    TestCanvas canvas;
     const keel::u32 width = 900;
     const keel::u32 height = 650;
     keel::Array<keel::u32> pixels(width * height);
@@ -126,7 +134,7 @@ void TestAttitudeViewWidgetWorkflow() {
 void TestCarClusterViewWidgetWorkflow() {
     using namespace guikit;
     Context ui;
-    ThorCanvas canvas;
+    TestCanvas canvas;
     const keel::u32 width = 960;
     const keel::u32 height = 560;
     keel::Array<keel::u32> pixels(width * height);
