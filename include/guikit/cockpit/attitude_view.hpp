@@ -67,33 +67,33 @@ struct AttitudeViewOptions {
     AircraftSymbolStyle aircraftSymbol{AircraftSymbolStyle::GullWing};
 
     // --- Primary Attitude & Air Data Telemetry ---
-    float rollDeg{0.0f};                ///< Bank angle in degrees (-180 .. +180, positive = right wing down)
-    float pitchDeg{0.0f};               ///< Pitch angle in degrees (-90 .. +90, positive = nose up)
-    float headingDeg{0.0f};             ///< Magnetic/True heading in degrees [0 .. 360)
-    float airspeedKnots{250.0f};        ///< Indicated Airspeed (IAS) in knots
-    float machNumber{0.72f};            ///< Mach number readout below speed tape
-    float altitudeFeet{12500.0f};       ///< Barometric altitude in feet
-    float verticalSpeedFpm{0.0f};       ///< Vertical speed in feet per minute (-6000 .. +6000)
-    float slipSkid{0.0f};               ///< Lateral inclinometer slip/skid ball offset (-1.0 .. +1.0)
-    float gLoad{1.0f};                  ///< Normal load factor Nz in G
-    float radioAltitudeFeet{2500.0f};   ///< Radio altimeter AGL height in feet (displayed when < 2500 ft)
+    keel::f32 rollDeg{0.0f};                ///< Bank angle in degrees (-180 .. +180, positive = right wing down)
+    keel::f32 pitchDeg{0.0f};               ///< Pitch angle in degrees (-90 .. +90, positive = nose up)
+    keel::f32 headingDeg{0.0f};             ///< Magnetic/True heading in degrees [0 .. 360)
+    keel::f32 airspeedKnots{250.0f};        ///< Indicated Airspeed (IAS) in knots
+    keel::f32 machNumber{0.72f};            ///< Mach number readout below speed tape
+    keel::f32 altitudeFeet{12500.0f};       ///< Barometric altitude in feet
+    keel::f32 verticalSpeedFpm{0.0f};       ///< Vertical speed in feet per minute (-6000 .. +6000)
+    keel::f32 slipSkid{0.0f};               ///< Lateral inclinometer slip/skid ball offset (-1.0 .. +1.0)
+    keel::f32 gLoad{1.0f};                  ///< Normal load factor Nz in G
+    keel::f32 radioAltitudeFeet{2500.0f};   ///< Radio altimeter AGL height in feet (displayed when < 2500 ft)
 
     // --- Flight Path Vector (FPV), Flight Director (FD) & Autopilot Bugs ---
     bool showFlightPathVector{true};    ///< Render Flight Path Vector ("bird" / velocity vector reticle)
-    float aoaDeg{2.2f};                 ///< Angle of Attack (alpha, shifts FPV vertically relative to pitch)
-    float sideslipDeg{0.0f};            ///< Sideslip angle (beta, shifts FPV horizontally)
-    float fdPitchDeg{2.5f};             ///< Flight Director commanded pitch in degrees
-    float fdRollDeg{0.0f};              ///< Flight Director commanded roll in degrees
-    float targetAirspeedBug{250.0f};    ///< Autopilot selected airspeed bug in knots
-    float targetAltitudeBug{12500.0f};  ///< Autopilot selected altitude bug in feet
-    float targetHeadingBug{0.0f};       ///< Autopilot selected heading bug in degrees
-    float baroSettingInHg{29.92f};      ///< Barometric altimeter setting in inHg (e.g. 29.92)
+    keel::f32 aoaDeg{2.2f};                 ///< Angle of Attack (alpha, shifts FPV vertically relative to pitch)
+    keel::f32 sideslipDeg{0.0f};            ///< Sideslip angle (beta, shifts FPV horizontally)
+    keel::f32 fdPitchDeg{2.5f};             ///< Flight Director commanded pitch in degrees
+    keel::f32 fdRollDeg{0.0f};              ///< Flight Director commanded roll in degrees
+    keel::f32 targetAirspeedBug{250.0f};    ///< Autopilot selected airspeed bug in knots
+    keel::f32 targetAltitudeBug{12500.0f};  ///< Autopilot selected altitude bug in feet
+    keel::f32 targetHeadingBug{0.0f};       ///< Autopilot selected heading bug in degrees
+    keel::f32 baroSettingInHg{29.92f};      ///< Barometric altimeter setting in inHg (e.g. 29.92)
     bool baroStd{false};                ///< Display "STD" barometric reference instead of inHg
 
     // --- ILS Approach Localizer & Glideslope Deviation ---
     bool showIlsDiamonds{true};         ///< Render ILS Localizer (bottom) and Glideslope (right) deviation scales
-    float locDeviationDots{0.0f};       ///< Localizer lateral deviation in dots (-2.5 .. +2.5)
-    float gsDeviationDots{0.0f};        ///< Glideslope vertical deviation in dots (-2.5 .. +2.5)
+    keel::f32 locDeviationDots{0.0f};       ///< Localizer lateral deviation in dots (-2.5 .. +2.5)
+    keel::f32 gsDeviationDots{0.0f};        ///< Glideslope vertical deviation in dots (-2.5 .. +2.5)
 
     // --- Symbology & Sub-Instrument Visibility Toggles ---
     bool showPitchLadder{true};         ///< Render 2.5/5/10 deg pitch ladder, zenith/nadir reticles, and chevrons
@@ -102,10 +102,10 @@ struct AttitudeViewOptions {
     bool showHeadingTape{true};         ///< Render magnetic compass heading tape
     bool showFmaBar{true};              ///< Render top Flight Mode Annunciator (FMA) status strip
     bool showMouseStickOverlay{false};  ///< Render interactive virtual-stick / mouse control reticle inside the ADI
-    float fieldOfViewPitchDeg{50.0f};   ///< Vertical pitch span visible across the ADI diameter (30 .. 90 deg)
+    keel::f32 fieldOfViewPitchDeg{50.0f};   ///< Vertical pitch span visible across the ADI diameter (30 .. 90 deg)
 
     // --- Optional Two-Way Bindings ---
-    float* fovPitchDegPtr{nullptr};     ///< Optional external two-way binding for mouse-wheel pitch FOV zoom
+    keel::f32* fovPitchDegPtr{nullptr};     ///< Optional external two-way binding for mouse-wheel pitch FOV zoom
 
     // --- Sizing & Styling ---
     AxisSize width{};                     ///< Horizontal sizing policy (`Auto` -> `Stretch`, `Fit`, or `Fixed(dp)`)
@@ -124,14 +124,14 @@ struct AttitudeViewResponse : public Response {
     Rect horizonRect{};                 ///< Resolved screen rectangle of the sky/ground horizon fill area
     Rect adiRect{};                     ///< Resolved screen rectangle of the central artificial horizon symbology zone
     Vec2 adiCenter{};                   ///< Center point of the artificial horizon in screen coordinates
-    float adiRadius{0.0f};              ///< Radius of the artificial horizon sphere in pixels
-    float visibleFovPitchDeg{50.0f};    ///< Effective vertical pitch field-of-view in degrees
+    keel::f32 adiRadius{0.0f};              ///< Radius of the artificial horizon sphere in pixels
+    keel::f32 visibleFovPitchDeg{50.0f};    ///< Effective vertical pitch field-of-view in degrees
 
     bool cursorInside{false};           ///< True when mouse cursor is inside the widget control area
     bool cursorInsideAdi{false};        ///< True when mouse cursor is inside the ADI horizon region
     Vec2 cursorNorm{0.0f, 0.0f};        ///< Normalized cursor offset from ADI center in [-1.0, +1.0] (X = roll, Y = pitch)
-    float cursorRollDeg{0.0f};          ///< Roll angle mapped from cursor X position (-65 .. +65 deg)
-    float cursorPitchDeg{0.0f};         ///< Pitch angle mapped from cursor Y position (-40 .. +40 deg, up = nose up)
+    keel::f32 cursorRollDeg{0.0f};          ///< Roll angle mapped from cursor X position (-65 .. +65 deg)
+    keel::f32 cursorPitchDeg{0.0f};         ///< Pitch angle mapped from cursor Y position (-40 .. +40 deg, up = nose up)
 };
 
 /// Autonomous Avionics Attitude Director Indicator (ADI) & Primary Flight Display (PFD) widget.
@@ -148,7 +148,7 @@ public:
         UiSize size,
         ICanvas* canvas = nullptr,
         const UiTheme& theme = {},
-        float availableWidth = 0.0f
+        keel::f32 availableWidth = 0.0f
     );
 };
 

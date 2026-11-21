@@ -10,18 +10,18 @@ namespace guikit {
 
 namespace {
 
-constexpr float kKmhToMph = 0.62137119f;
-constexpr float kBarToPsi = 14.5037738f;
+constexpr keel::f32 kKmhToMph = 0.62137119f;
+constexpr keel::f32 kBarToPsi = 14.5037738f;
 
 struct CarClusterViewState {
-    float lastSpeedKmh{0.0f};
-    double roadScrollPhase{0.0};
+    keel::f32 lastSpeedKmh{0.0f};
+    keel::f64 roadScrollPhase{0.0};
 };
 
 struct CarClusterViewPayload {
     CarClusterViewOptions opts{};
     CarClusterViewResponse resp{};
-    float roadPhase{0.0f};
+    keel::f32 roadPhase{0.0f};
 };
 
 struct ClusterPalette {
@@ -101,19 +101,19 @@ struct ClusterPalette {
     return p;
 }
 
-[[nodiscard]] float DisplaySpeed(float speedKmh, SpeedUnit unit) noexcept {
+[[nodiscard]] keel::f32 DisplaySpeed(keel::f32 speedKmh, SpeedUnit unit) noexcept {
     return (unit == SpeedUnit::Mph) ? (speedKmh * kKmhToMph) : speedKmh;
 }
 
-[[nodiscard]] float DisplayDistance(float distKm, SpeedUnit unit) noexcept {
+[[nodiscard]] keel::f32 DisplayDistance(keel::f32 distKm, SpeedUnit unit) noexcept {
     return (unit == SpeedUnit::Mph) ? (distKm * kKmhToMph) : distKm;
 }
 
-[[nodiscard]] float DisplayTemp(float tempC, SpeedUnit unit) noexcept {
+[[nodiscard]] keel::f32 DisplayTemp(keel::f32 tempC, SpeedUnit unit) noexcept {
     return (unit == SpeedUnit::Mph) ? (tempC * 1.8f + 32.0f) : tempC;
 }
 
-[[nodiscard]] float DisplayPressure(float bar, SpeedUnit unit) noexcept {
+[[nodiscard]] keel::f32 DisplayPressure(keel::f32 bar, SpeedUnit unit) noexcept {
     return (unit == SpeedUnit::Mph) ? (bar * kBarToPsi) : bar;
 }
 
@@ -132,10 +132,10 @@ struct ClusterPalette {
 void DrawCircleRing(
     ICanvas& canvas,
     Vec2 center,
-    float radius,
+    keel::f32 radius,
     Color fill,
     Color stroke,
-    float strokeWidth = 1.0f
+    keel::f32 strokeWidth = 1.0f
 ) noexcept {
     if (radius <= 0.5f) return;
     const Rect r(center.x - radius, center.y - radius, radius * 2.0f, radius * 2.0f);
@@ -147,21 +147,21 @@ void DrawCircleRing(
 void DrawCircularArc(
     ICanvas& canvas,
     Vec2 center,
-    float radius,
-    float startDeg,
-    float endDeg,
+    keel::f32 radius,
+    keel::f32 startDeg,
+    keel::f32 endDeg,
     Color color,
-    float thickness,
+    keel::f32 thickness,
     keel::i32 segments = 36
 ) noexcept {
     if (radius <= 1.0f || keel::abs(endDeg - startDeg) < 0.2f || segments < 2) return;
-    const float step = (endDeg - startDeg) / static_cast<float>(segments);
+    const keel::f32 step = (endDeg - startDeg) / keel::as<keel::f32>(segments);
     Vec2 prev{
         center.x + keel::cos(keel::deg_to_rad(startDeg)) * radius,
         center.y + keel::sin(keel::deg_to_rad(startDeg)) * radius
     };
     for (keel::i32 i = 1; i <= segments; ++i) {
-        const float deg = startDeg + step * static_cast<float>(i);
+        const keel::f32 deg = startDeg + step * keel::as<keel::f32>(i);
         const Vec2 cur{
             center.x + keel::cos(keel::deg_to_rad(deg)) * radius,
             center.y + keel::sin(keel::deg_to_rad(deg)) * radius
@@ -175,15 +175,15 @@ void DrawCircularArc(
 void DrawGaugeNeedle(
     ICanvas& canvas,
     Vec2 center,
-    float angleDeg,
-    float innerR,
-    float outerR,
-    float baseHalfWidth,
+    keel::f32 angleDeg,
+    keel::f32 innerR,
+    keel::f32 outerR,
+    keel::f32 baseHalfWidth,
     Color needleColor,
     Color glowColor,
-    float s
+    keel::f32 s
 ) noexcept {
-    const float rad = keel::deg_to_rad(angleDeg);
+    const keel::f32 rad = keel::deg_to_rad(angleDeg);
     const Vec2 dir{keel::cos(rad), keel::sin(rad)};
     const Vec2 nrm{-dir.y, dir.x};
 
@@ -240,31 +240,31 @@ void RenderShiftLightStrip(
     const Rect& stripRect,
     const CarClusterViewOptions& opts,
     const ClusterPalette& pal,
-    float s
+    keel::f32 s
 ) noexcept {
     if (stripRect.w < 80.0f || stripRect.h < 6.0f) return;
 
-    float loadNorm = 0.0f;
+    keel::f32 loadNorm = 0.0f;
     if (opts.powertrain == PowertrainMode::IceTurbo) {
-        const float shiftStartRpm = keel::max(2500.0f, opts.redlineRpm * 0.58f);
+        const keel::f32 shiftStartRpm = keel::max(2500.0f, opts.redlineRpm * 0.58f);
         loadNorm = keel::clamp((opts.rpm - shiftStartRpm) / keel::max(500.0f, opts.redlineRpm - shiftStartRpm), 0.0f, 1.08f);
     } else {
         loadNorm = keel::clamp(opts.evPowerKw / 420.0f, 0.0f, 1.08f);
     }
 
     constexpr keel::i32 kNumLeds = 15;
-    const float padX = 12.0f * s;
-    const float availW = keel::max(40.0f, stripRect.w - padX * 2.0f);
-    const float gap = 4.0f * s;
-    const float ledW = keel::max(4.0f, (availW - gap * static_cast<float>(kNumLeds - 1)) / static_cast<float>(kNumLeds));
-    const float ledH = keel::min(stripRect.h - 2.0f * s, 7.0f * s);
-    const float y = stripRect.y + (stripRect.h - ledH) * 0.5f;
+    const keel::f32 padX = 12.0f * s;
+    const keel::f32 availW = keel::max(40.0f, stripRect.w - padX * 2.0f);
+    const keel::f32 gap = 4.0f * s;
+    const keel::f32 ledW = keel::max(4.0f, (availW - gap * keel::as<keel::f32>(kNumLeds - 1)) / keel::as<keel::f32>(kNumLeds));
+    const keel::f32 ledH = keel::min(stripRect.h - 2.0f * s, 7.0f * s);
+    const keel::f32 y = stripRect.y + (stripRect.h - ledH) * 0.5f;
 
     const bool shiftFlash = (loadNorm >= 0.97f);
-    const keel::i32 litCount = keel::round_i32(keel::clamp(loadNorm, 0.0f, 1.0f) * static_cast<float>(kNumLeds));
+    const keel::i32 litCount = keel::round_i32(keel::clamp(loadNorm, 0.0f, 1.0f) * keel::as<keel::f32>(kNumLeds));
 
     for (keel::i32 i = 0; i < kNumLeds; ++i) {
-        const float x = stripRect.x + padX + static_cast<float>(i) * (ledW + gap);
+        const keel::f32 x = stripRect.x + padX + keel::as<keel::f32>(i) * (ledW + gap);
         const Rect lr(x, y, ledW, ledH);
         const bool isLit = (i < litCount) && (!shiftFlash || opts.telltales.blinkPhaseOn);
 
@@ -288,12 +288,12 @@ void RenderShiftLightStrip(
 // ============================================================================
 // 2. ISO Automotive Telltale Warning & Status Ribbon
 // ============================================================================
-void DrawTurnSignalArrow(ICanvas& canvas, Rect box, bool isLeft, bool active, float s) noexcept {
+void DrawTurnSignalArrow(ICanvas& canvas, Rect box, bool isLeft, bool active, keel::f32 s) noexcept {
     const Color fill = active ? Color(34, 197, 94, 255) : Color(30, 41, 59, 170);
     const Color stroke = active ? Color(134, 239, 172, 255) : Color(71, 85, 105, 150);
     const Vec2 c = box.Center();
-    const float w = keel::min(box.w, box.h) * 0.44f;
-    const float h = w * 0.82f;
+    const keel::f32 w = keel::min(box.w, box.h) * 0.44f;
+    const keel::f32 h = w * 0.82f;
 
     if (isLeft) {
         canvas.DrawTriangle({c.x - w, c.y}, {c.x, c.y - h}, {c.x, c.y + h}, fill, stroke, 1.0f * s);
@@ -310,7 +310,7 @@ void DrawTelltalePill(
     keel::StringRef label,
     bool active,
     Color activeColor,
-    float s
+    keel::f32 s
 ) noexcept {
     const Color bg = active ? activeColor.WithAlpha(38) : Color(18, 25, 38, 160);
     const Color border = active ? activeColor : Color(51, 65, 85, 120);
@@ -324,7 +324,7 @@ void RenderTelltaleBar(
     const Rect& barRect,
     const CarClusterViewOptions& opts,
     const ClusterPalette& pal,
-    float s
+    keel::f32 s
 ) noexcept {
     if (barRect.w < 160.0f || barRect.h < 18.0f) return;
 
@@ -332,8 +332,8 @@ void RenderTelltaleBar(
     const bool leftBlink = (tt.leftTurn || tt.hazard) && tt.blinkPhaseOn;
     const bool rightBlink = (tt.rightTurn || tt.hazard) && tt.blinkPhaseOn;
 
-    const float arrowSize = keel::min(barRect.h - 2.0f * s, 22.0f * s);
-    const float cy = barRect.y + barRect.h * 0.5f;
+    const keel::f32 arrowSize = keel::min(barRect.h - 2.0f * s, 22.0f * s);
+    const keel::f32 cy = barRect.y + barRect.h * 0.5f;
 
     // Left Turn Arrow
     const Rect leftArrowRect(barRect.x + 8.0f * s, cy - arrowSize * 0.5f, arrowSize * 1.2f, arrowSize);
@@ -344,10 +344,10 @@ void RenderTelltaleBar(
     DrawTurnSignalArrow(canvas, rightArrowRect, false, rightBlink, s);
 
     // Left cluster of lighting & chassis telltale badges
-    const float pillH = keel::min(barRect.h - 4.0f * s, 18.0f * s);
-    const float pillY = cy - pillH * 0.5f;
-    float lx = leftArrowRect.Right() + 8.0f * s;
-    const float gap = 5.0f * s;
+    const keel::f32 pillH = keel::min(barRect.h - 4.0f * s, 18.0f * s);
+    const keel::f32 pillY = cy - pillH * 0.5f;
+    keel::f32 lx = leftArrowRect.Right() + 8.0f * s;
+    const keel::f32 gap = 5.0f * s;
 
     DrawTelltalePill(canvas, Rect(lx, pillY, 36.0f * s, pillH), "LOW", tt.lowBeam, Color(34, 197, 94, 255), s);
     lx += 36.0f * s + gap;
@@ -360,8 +360,8 @@ void RenderTelltaleBar(
     }
 
     // Right cluster of safety & warning telltale badges
-    float rx = rightArrowRect.x - 8.0f * s;
-    auto pushRightPill = [&](keel::StringRef text, float w, bool on, Color c) {
+    keel::f32 rx = rightArrowRect.x - 8.0f * s;
+    auto pushRightPill = [&](keel::StringRef text, keel::f32 w, bool on, Color c) {
         rx -= w;
         if (rx > lx + 80.0f * s) {
             DrawTelltalePill(canvas, Rect(rx, pillY, w, pillH), text, on, c, s);
@@ -393,7 +393,7 @@ void RenderTelltaleBar(
         themeTitle,
         (opts.powertrain == PowertrainMode::IceTurbo) ? "TWIN-TURBO 8-DCT" : "DUAL-MOTOR AWD"
     );
-    const float centerW = keel::min(220.0f * s, keel::max(100.0f * s, rx - lx - 12.0f * s));
+    const keel::f32 centerW = keel::min(220.0f * s, keel::max(100.0f * s, rx - lx - 12.0f * s));
     if (centerW >= 100.0f * s) {
         const Rect centerPill(barRect.Center().x - centerW * 0.5f, pillY, centerW, pillH);
         canvas.DrawRoundRect(centerPill, pillH * 0.5f, pal.primaryAccent.WithAlpha(28), pal.primaryAccent.WithAlpha(185), 1.0f * s);
@@ -409,10 +409,10 @@ void RenderSpeedometerDial(
     const Rect& dialBox,
     const CarClusterViewOptions& opts,
     const ClusterPalette& pal,
-    float s
+    keel::f32 s
 ) noexcept {
     const Vec2 center = dialBox.Center();
-    const float radius = keel::min(dialBox.w, dialBox.h) * 0.47f;
+    const keel::f32 radius = keel::min(dialBox.w, dialBox.h) * 0.47f;
     if (radius < 45.0f) return;
 
     // Outer metallic ring & recessed dial face
@@ -420,15 +420,15 @@ void RenderSpeedometerDial(
     DrawCircleRing(canvas, center, radius * 0.93f, pal.dialInnerBg, pal.cardBorder, 1.0f * s);
 
     // Scale parameters: 135 deg (7:30) to 405 deg (4:30) -> 270 deg sweep
-    constexpr float kStartDeg = 135.0f;
-    constexpr float kSweepDeg = 270.0f;
-    const float maxSpdDisp = keel::max(60.0f, DisplaySpeed(opts.maxSpeedKmh, opts.speedUnit));
-    const float curSpdDisp = keel::clamp(DisplaySpeed(opts.speedKmh, opts.speedUnit), 0.0f, maxSpdDisp);
-    const float spdNorm = keel::clamp(curSpdDisp / maxSpdDisp, 0.0f, 1.0f);
-    const float needleDeg = kStartDeg + spdNorm * kSweepDeg;
+    constexpr keel::f32 kStartDeg = 135.0f;
+    constexpr keel::f32 kSweepDeg = 270.0f;
+    const keel::f32 maxSpdDisp = keel::max(60.0f, DisplaySpeed(opts.maxSpeedKmh, opts.speedUnit));
+    const keel::f32 curSpdDisp = keel::clamp(DisplaySpeed(opts.speedKmh, opts.speedUnit), 0.0f, maxSpdDisp);
+    const keel::f32 spdNorm = keel::clamp(curSpdDisp / maxSpdDisp, 0.0f, 1.0f);
+    const keel::f32 needleDeg = kStartDeg + spdNorm * kSweepDeg;
 
     // Background track arc & glowing active speed arc
-    const float arcR = radius * 0.86f;
+    const keel::f32 arcR = radius * 0.86f;
     DrawCircularArc(canvas, center, arcR, kStartDeg, kStartDeg + kSweepDeg, Color(30, 41, 59, 165), 5.0f * s, 44);
     if (spdNorm > 0.004f) {
         DrawCircularArc(canvas, center, arcR, kStartDeg, needleDeg, pal.primaryAccent.WithAlpha(90), 8.5f * s, 36);
@@ -437,9 +437,9 @@ void RenderSpeedometerDial(
 
     // Adaptive Cruise Control (ACC) target bug on the rim
     if (opts.cruiseSet && opts.telltales.adasCruiseActive) {
-        const float cruiseDisp = keel::clamp(DisplaySpeed(opts.cruiseTargetKmh, opts.speedUnit), 0.0f, maxSpdDisp);
-        const float cruiseDeg = kStartDeg + (cruiseDisp / maxSpdDisp) * kSweepDeg;
-        const float cRad = keel::deg_to_rad(cruiseDeg);
+        const keel::f32 cruiseDisp = keel::clamp(DisplaySpeed(opts.cruiseTargetKmh, opts.speedUnit), 0.0f, maxSpdDisp);
+        const keel::f32 cruiseDeg = kStartDeg + (cruiseDisp / maxSpdDisp) * kSweepDeg;
+        const keel::f32 cRad = keel::deg_to_rad(cruiseDeg);
         const Vec2 bugTip{center.x + keel::cos(cRad) * (arcR - 4.0f * s), center.y + keel::sin(cRad) * (arcR - 4.0f * s)};
         const Vec2 bugL{
             center.x + keel::cos(keel::deg_to_rad(cruiseDeg - 3.2f)) * (arcR + 6.0f * s),
@@ -458,28 +458,28 @@ void RenderSpeedometerDial(
     const keel::i32 maxTick = keel::round_i32(maxSpdDisp);
 
     for (keel::i32 v = 0; v <= maxTick; v += minorStep) {
-        const float frac = static_cast<float>(v) / maxSpdDisp;
+        const keel::f32 frac = keel::as<keel::f32>(v) / maxSpdDisp;
         if (frac > 1.001f) break;
-        const float deg = kStartDeg + frac * kSweepDeg;
-        const float rad = keel::deg_to_rad(deg);
+        const keel::f32 deg = kStartDeg + frac * kSweepDeg;
+        const keel::f32 rad = keel::deg_to_rad(deg);
         const bool isMajor = (v % majorStep == 0);
-        const float rOuter = radius * 0.89f;
-        const float rInner = radius * (isMajor ? 0.78f : 0.835f);
+        const keel::f32 rOuter = radius * 0.89f;
+        const keel::f32 rInner = radius * (isMajor ? 0.78f : 0.835f);
 
         const Vec2 p0{center.x + keel::cos(rad) * rInner, center.y + keel::sin(rad) * rInner};
         const Vec2 p1{center.x + keel::cos(rad) * rOuter, center.y + keel::sin(rad) * rOuter};
-        const Color tickCol = (static_cast<float>(v) <= curSpdDisp + 0.5f)
+        const Color tickCol = (keel::as<keel::f32>(v) <= curSpdDisp + 0.5f)
             ? (isMajor ? pal.textBright : pal.primaryAccent)
             : (isMajor ? pal.tickMajor : pal.tickMinor);
         canvas.DrawLine(p0, p1, tickCol, (isMajor ? 2.0f : 1.0f) * s);
 
         if (isMajor && radius >= 68.0f) {
-            const float labelR = radius * 0.65f;
+            const keel::f32 labelR = radius * 0.65f;
             const Vec2 lp{center.x + keel::cos(rad) * labelR, center.y + keel::sin(rad) * labelR};
             char buf[16]{};
             const Rect lblBox(lp.x - 16.0f * s, lp.y - 8.0f * s, 32.0f * s, 16.0f * s);
             canvas.DrawTextBox(keel::format_buf(buf, "%d", v), lblBox, keel::clamp(radius * 0.095f, 8.5f * s, 12.5f * s),
-                               (static_cast<float>(v) <= curSpdDisp + 0.5f) ? pal.textBright : pal.textSecondary, 0.5f, 0.5f);
+                               (keel::as<keel::f32>(v) <= curSpdDisp + 0.5f) ? pal.textBright : pal.textSecondary, 0.5f, 0.5f);
         }
     }
 
@@ -489,8 +489,8 @@ void RenderSpeedometerDial(
 
     // Center Digital Speed Readout
     char spdBuf[16]{};
-    const float bigFs = keel::clamp(radius * 0.34f, 18.0f * s, 38.0f * s);
-    const float subFs = keel::clamp(radius * 0.095f, 8.5f * s, 12.0f * s);
+    const keel::f32 bigFs = keel::clamp(radius * 0.34f, 18.0f * s, 38.0f * s);
+    const keel::f32 subFs = keel::clamp(radius * 0.095f, 8.5f * s, 12.0f * s);
 
     canvas.DrawTextBox(
         keel::format_buf(spdBuf, "%.0f", curSpdDisp),
@@ -510,16 +510,16 @@ void RenderSpeedometerDial(
     );
 
     // Bottom Opening (55 deg .. 125 deg): Fuel / SoC Bar & Range Readout
-    const float fuelNorm = keel::clamp(opts.fuelOrSocPct * 0.01f, 0.0f, 1.0f);
+    const keel::f32 fuelNorm = keel::clamp(opts.fuelOrSocPct * 0.01f, 0.0f, 1.0f);
     const Color fuelCol = (fuelNorm < 0.15f) ? pal.dangerRed : ((opts.powertrain == PowertrainMode::ElectricDualMotor) ? pal.ecoGreen : pal.secondaryAccent);
-    const float botArcR = radius * 0.76f;
+    const keel::f32 botArcR = radius * 0.76f;
     DrawCircularArc(canvas, center, botArcR, 122.0f, 58.0f, Color(30, 41, 59, 170), 4.0f * s, 20);
     if (fuelNorm > 0.01f) {
         DrawCircularArc(canvas, center, botArcR, 122.0f, 122.0f - fuelNorm * 64.0f, fuelCol, 4.2f * s, 20);
     }
 
     char fuelBuf[32]{};
-    const float dispRange = DisplayDistance(opts.estimatedRangeKm, opts.speedUnit);
+    const keel::f32 dispRange = DisplayDistance(opts.estimatedRangeKm, opts.speedUnit);
     const keel::StringRef fuelRef = keel::format_buf(
         fuelBuf,
         "%s %.0f%% · %.0f %s",
@@ -547,30 +547,30 @@ void RenderTachOrPowerDial(
     const CarClusterViewOptions& opts,
     const ClusterPalette& pal,
     bool showSpeedInsideCenter,
-    float s
+    keel::f32 s
 ) noexcept {
     const Vec2 center = dialBox.Center();
-    const float radius = keel::min(dialBox.w, dialBox.h) * 0.47f;
+    const keel::f32 radius = keel::min(dialBox.w, dialBox.h) * 0.47f;
     if (radius < 45.0f) return;
 
     DrawCircleRing(canvas, center, radius, pal.dialBg, pal.dialRim, 2.0f * s);
     DrawCircleRing(canvas, center, radius * 0.93f, pal.dialInnerBg, pal.cardBorder, 1.0f * s);
 
-    constexpr float kStartDeg = 135.0f;
-    constexpr float kSweepDeg = 270.0f;
-    const float arcR = radius * 0.86f;
+    constexpr keel::f32 kStartDeg = 135.0f;
+    constexpr keel::f32 kSweepDeg = 270.0f;
+    const keel::f32 arcR = radius * 0.86f;
 
-    float needleDeg = kStartDeg;
+    keel::f32 needleDeg = kStartDeg;
     Color activeArcCol = pal.primaryAccent;
 
     if (opts.powertrain == PowertrainMode::IceTurbo) {
-        const float maxRpm = keel::max(6000.0f, opts.maxRpm);
-        const float redlineRpm = keel::clamp(opts.redlineRpm, 4500.0f, maxRpm);
-        const float curRpm = keel::clamp(opts.rpm, 0.0f, maxRpm);
-        const float rpmNorm = curRpm / maxRpm;
-        const float redlineNorm = redlineRpm / maxRpm;
+        const keel::f32 maxRpm = keel::max(6000.0f, opts.maxRpm);
+        const keel::f32 redlineRpm = keel::clamp(opts.redlineRpm, 4500.0f, maxRpm);
+        const keel::f32 curRpm = keel::clamp(opts.rpm, 0.0f, maxRpm);
+        const keel::f32 rpmNorm = curRpm / maxRpm;
+        const keel::f32 redlineNorm = redlineRpm / maxRpm;
         needleDeg = kStartDeg + rpmNorm * kSweepDeg;
-        const float redlineStartDeg = kStartDeg + redlineNorm * kSweepDeg;
+        const keel::f32 redlineStartDeg = kStartDeg + redlineNorm * kSweepDeg;
 
         // Track & Redline arc
         DrawCircularArc(canvas, center, arcR, kStartDeg, redlineStartDeg, Color(30, 41, 59, 165), 5.0f * s, 36);
@@ -586,23 +586,23 @@ void RenderTachOrPowerDial(
         const keel::i32 maxK = keel::ceil_i32(maxRpm / 1000.0f);
         const keel::i32 totalSubTicks = maxK * 5;
         for (keel::i32 t = 0; t <= totalSubTicks; ++t) {
-            const float rpmVal = static_cast<float>(t) * 200.0f;
+            const keel::f32 rpmVal = keel::as<keel::f32>(t) * 200.0f;
             if (rpmVal > maxRpm + 10.0f) break;
-            const float frac = rpmVal / maxRpm;
-            const float deg = kStartDeg + frac * kSweepDeg;
-            const float rad = keel::deg_to_rad(deg);
+            const keel::f32 frac = rpmVal / maxRpm;
+            const keel::f32 deg = kStartDeg + frac * kSweepDeg;
+            const keel::f32 rad = keel::deg_to_rad(deg);
             const bool isMajor = (t % 5 == 0);
             const bool inRed = (rpmVal >= redlineRpm - 10.0f);
 
-            const float rOuter = radius * 0.89f;
-            const float rInner = radius * (isMajor ? 0.78f : 0.835f);
+            const keel::f32 rOuter = radius * 0.89f;
+            const keel::f32 rInner = radius * (isMajor ? 0.78f : 0.835f);
             const Vec2 p0{center.x + keel::cos(rad) * rInner, center.y + keel::sin(rad) * rInner};
             const Vec2 p1{center.x + keel::cos(rad) * rOuter, center.y + keel::sin(rad) * rOuter};
             const Color tickCol = inRed ? pal.dangerRed : (isMajor ? pal.tickMajor : pal.tickMinor);
             canvas.DrawLine(p0, p1, tickCol, (isMajor ? 2.2f : 1.0f) * s);
 
             if (isMajor && radius >= 68.0f) {
-                const float labelR = radius * 0.65f;
+                const keel::f32 labelR = radius * 0.65f;
                 const Vec2 lp{center.x + keel::cos(rad) * labelR, center.y + keel::sin(rad) * labelR};
                 char buf[8]{};
                 canvas.DrawTextBox(
@@ -618,13 +618,13 @@ void RenderTachOrPowerDial(
     } else {
         // Electric Dual-Motor Power / Regen Gauge (-150 kW Regen .. 0 .. +450 kW Power)
         // Zero at 202.5 deg (25% of 270 deg sweep)
-        constexpr float kZeroDeg = kStartDeg + 67.5f; // 202.5 deg
+        constexpr keel::f32 kZeroDeg = kStartDeg + 67.5f; // 202.5 deg
         DrawCircularArc(canvas, center, arcR, kStartDeg, kZeroDeg, pal.ecoGreen.WithAlpha(75), 5.0f * s, 16);
         DrawCircularArc(canvas, center, arcR, kZeroDeg, kStartDeg + kSweepDeg, Color(30, 41, 59, 165), 5.0f * s, 32);
 
-        const float kw = keel::clamp(opts.evPowerKw, -150.0f, 450.0f);
+        const keel::f32 kw = keel::clamp(opts.evPowerKw, -150.0f, 450.0f);
         if (kw >= 0.0f) {
-            const float pNorm = kw / 450.0f;
+            const keel::f32 pNorm = kw / 450.0f;
             needleDeg = kZeroDeg + pNorm * (270.0f - 67.5f);
             activeArcCol = (pNorm > 0.82f) ? pal.dangerRed : pal.primaryAccent;
             if (pNorm > 0.005f) {
@@ -632,7 +632,7 @@ void RenderTachOrPowerDial(
                 DrawCircularArc(canvas, center, arcR, kZeroDeg, needleDeg, activeArcCol, 4.2f * s, 28);
             }
         } else {
-            const float rNorm = (-kw) / 150.0f;
+            const keel::f32 rNorm = (-kw) / 150.0f;
             needleDeg = kZeroDeg - rNorm * 67.5f;
             activeArcCol = pal.ecoGreen;
             if (rNorm > 0.005f) {
@@ -642,7 +642,7 @@ void RenderTachOrPowerDial(
         }
 
         // EV scale labels: CHG, 0, 25, 50, 75, 100 % POWER
-        struct EvTick { float frac; const char* label; Color col; };
+        struct EvTick { keel::f32 frac; const char* label; Color col; };
         const EvTick kEvTicks[] = {
             {0.00f, "-30",  pal.ecoGreen},
             {0.25f, "0",    pal.textBright},
@@ -652,13 +652,13 @@ void RenderTachOrPowerDial(
             {1.00f, "100",  pal.dangerRed}
         };
         for (const auto& et : kEvTicks) {
-            const float deg = kStartDeg + et.frac * kSweepDeg;
-            const float rad = keel::deg_to_rad(deg);
+            const keel::f32 deg = kStartDeg + et.frac * kSweepDeg;
+            const keel::f32 rad = keel::deg_to_rad(deg);
             const Vec2 p0{center.x + keel::cos(rad) * (radius * 0.78f), center.y + keel::sin(rad) * (radius * 0.78f)};
             const Vec2 p1{center.x + keel::cos(rad) * (radius * 0.89f), center.y + keel::sin(rad) * (radius * 0.89f)};
             canvas.DrawLine(p0, p1, et.col, 2.0f * s);
             if (radius >= 68.0f) {
-                const float labelR = radius * 0.64f;
+                const keel::f32 labelR = radius * 0.64f;
                 const Vec2 lp{center.x + keel::cos(rad) * labelR, center.y + keel::sin(rad) * labelR};
                 canvas.DrawTextBox(
                     et.label,
@@ -673,7 +673,7 @@ void RenderTachOrPowerDial(
     }
 
     // Needle + Center Hub
-    const float hubR = radius * (showSpeedInsideCenter ? 0.44f : 0.38f);
+    const keel::f32 hubR = radius * (showSpeedInsideCenter ? 0.44f : 0.38f);
     DrawGaugeNeedle(canvas, center, needleDeg, hubR * 0.82f, radius * 0.85f, 3.2f * s, activeArcCol, activeArcCol, s);
     DrawCircleRing(canvas, center, hubR, pal.dialInnerBg, pal.dialRim, 1.5f * s);
 
@@ -684,8 +684,8 @@ void RenderTachOrPowerDial(
     if (showSpeedInsideCenter) {
         // TrackCentral mode: Speed + Gear badge + RPM/kW inside the dominant central dial
         char spdBuf[16]{};
-        const float bigFs = keel::clamp(radius * 0.32f, 20.0f * s, 40.0f * s);
-        const float subFs = keel::clamp(radius * 0.090f, 8.5f * s, 11.5f * s);
+        const keel::f32 bigFs = keel::clamp(radius * 0.32f, 20.0f * s, 40.0f * s);
+        const keel::f32 subFs = keel::clamp(radius * 0.090f, 8.5f * s, 11.5f * s);
 
         canvas.DrawTextBox(
             keel::format_buf(spdBuf, "%.0f", DisplaySpeed(opts.speedKmh, opts.speedUnit)),
@@ -709,8 +709,8 @@ void RenderTachOrPowerDial(
         canvas.DrawTextBox(gearStr, gearBox, 12.0f * s, pal.textBright, 0.5f, 0.5f);
     } else {
         // DualDial mode: Large Gear Indicator + Digital RPM or kW
-        const float gearFs = keel::clamp(radius * 0.30f, 17.0f * s, 32.0f * s);
-        const float subFs = keel::clamp(radius * 0.092f, 8.5f * s, 11.5f * s);
+        const keel::f32 gearFs = keel::clamp(radius * 0.30f, 17.0f * s, 32.0f * s);
+        const keel::f32 subFs = keel::clamp(radius * 0.092f, 8.5f * s, 11.5f * s);
 
         canvas.DrawTextBox(
             gearStr,
@@ -736,10 +736,10 @@ void RenderTachOrPowerDial(
     }
 
     // Bottom Opening: Coolant / Oil / Battery Temperature Bar
-    const float tempC = opts.coolantOrBattTempC;
-    const float tempNorm = keel::clamp((tempC - 40.0f) / 90.0f, 0.0f, 1.0f);
+    const keel::f32 tempC = opts.coolantOrBattTempC;
+    const keel::f32 tempNorm = keel::clamp((tempC - 40.0f) / 90.0f, 0.0f, 1.0f);
     const Color tempCol = (tempC > 112.0f) ? pal.dangerRed : pal.secondaryAccent;
-    const float botArcR = radius * 0.76f;
+    const keel::f32 botArcR = radius * 0.76f;
     DrawCircularArc(canvas, center, botArcR, 122.0f, 58.0f, Color(30, 41, 59, 170), 4.0f * s, 20);
     if (tempNorm > 0.01f) {
         DrawCircularArc(canvas, center, botArcR, 122.0f, 122.0f - tempNorm * 64.0f, tempCol, 4.2f * s, 20);
@@ -779,15 +779,15 @@ void RenderAdasLaneRadarPage(
     const Rect& bodyRect,
     const CarClusterViewOptions& opts,
     const ClusterPalette& pal,
-    float roadPhase,
-    float s
+    keel::f32 roadPhase,
+    keel::f32 s
 ) noexcept {
     canvas.PushClip(bodyRect);
 
-    const float horizonY = bodyRect.y + bodyRect.h * 0.26f;
-    const float botY = bodyRect.Bottom() - 4.0f * s;
-    const float roadH = keel::max(20.0f, botY - horizonY);
-    const float cx = bodyRect.Center().x;
+    const keel::f32 horizonY = bodyRect.y + bodyRect.h * 0.26f;
+    const keel::f32 botY = bodyRect.Bottom() - 4.0f * s;
+    const keel::f32 roadH = keel::max(20.0f, botY - horizonY);
+    const keel::f32 cx = bodyRect.Center().x;
 
     // Sky & Horizon Glow
     canvas.DrawRect(Rect(bodyRect.x, bodyRect.y, bodyRect.w, horizonY - bodyRect.y), Color(9, 15, 28, 255));
@@ -795,18 +795,18 @@ void RenderAdasLaneRadarPage(
     canvas.DrawLine({bodyRect.x, horizonY}, {bodyRect.Right(), horizonY}, pal.primaryAccent.WithAlpha(95), 1.2f * s);
 
     // Perspective 3D road curvature from steeringAngleDeg
-    const float steerCurve = keel::clamp(opts.steeringAngleDeg / 45.0f, -1.0f, 1.0f) * (bodyRect.w * 0.22f);
-    const float topHalfW = bodyRect.w * 0.08f;
-    const float botHalfW = bodyRect.w * 0.44f;
+    const keel::f32 steerCurve = keel::clamp(opts.steeringAngleDeg / 45.0f, -1.0f, 1.0f) * (bodyRect.w * 0.22f);
+    const keel::f32 topHalfW = bodyRect.w * 0.08f;
+    const keel::f32 botHalfW = bodyRect.w * 0.44f;
 
     // Road surface polygon slices with steering curvature
     constexpr keel::i32 kRoadSlices = 14;
-    auto laneCenterAt = [&](float depthT) noexcept -> float {
+    auto laneCenterAt = [&](keel::f32 depthT) noexcept -> keel::f32 {
         // depthT: 0.0 at horizon (top), 1.0 at bottom (ego car)
-        const float farFactor = (1.0f - depthT) * (1.0f - depthT);
+        const keel::f32 farFactor = (1.0f - depthT) * (1.0f - depthT);
         return cx + steerCurve * farFactor;
     };
-    auto laneHalfWidthAt = [&](float depthT) noexcept -> float {
+    auto laneHalfWidthAt = [&](keel::f32 depthT) noexcept -> keel::f32 {
         return topHalfW + (botHalfW - topHalfW) * depthT;
     };
 
@@ -814,15 +814,15 @@ void RenderAdasLaneRadarPage(
     const Color carpetCol   = pal.primaryAccent.WithAlpha(34);
 
     for (keel::i32 i = 0; i < kRoadSlices; ++i) {
-        const float t0 = static_cast<float>(i) / static_cast<float>(kRoadSlices);
-        const float t1 = static_cast<float>(i + 1) / static_cast<float>(kRoadSlices);
-        const float y0 = horizonY + t0 * roadH;
-        const float y1 = horizonY + t1 * roadH;
+        const keel::f32 t0 = keel::as<keel::f32>(i) / keel::as<keel::f32>(kRoadSlices);
+        const keel::f32 t1 = keel::as<keel::f32>(i + 1) / keel::as<keel::f32>(kRoadSlices);
+        const keel::f32 y0 = horizonY + t0 * roadH;
+        const keel::f32 y1 = horizonY + t1 * roadH;
 
-        const float cx0 = laneCenterAt(t0);
-        const float cx1 = laneCenterAt(t1);
-        const float hw0 = laneHalfWidthAt(t0);
-        const float hw1 = laneHalfWidthAt(t1);
+        const keel::f32 cx0 = laneCenterAt(t0);
+        const keel::f32 cx1 = laneCenterAt(t1);
+        const keel::f32 hw0 = laneHalfWidthAt(t0);
+        const keel::f32 hw1 = laneHalfWidthAt(t1);
 
         // Ego lane guidance carpet (inner 66% of lane width)
         const Vec2 cL0{cx0 - hw0 * 0.66f, y0};
@@ -843,26 +843,26 @@ void RenderAdasLaneRadarPage(
 
     // Animated scrolling distance chevrons along ego lane carpet
     for (keel::i32 k = 0; k < 5; ++k) {
-        float depthT = keel::fmod(static_cast<float>(k) * 0.20f + roadPhase, 1.0f);
+        keel::f32 depthT = keel::fmod(keel::as<keel::f32>(k) * 0.20f + roadPhase, 1.0f);
         depthT = depthT * depthT; // perspective foreshortening
         if (depthT < 0.08f || depthT > 0.85f) continue;
-        const float y = horizonY + depthT * roadH;
-        const float lcx = laneCenterAt(depthT);
-        const float hw = laneHalfWidthAt(depthT) * 0.42f;
-        const Color chevCol = pal.primaryAccent.WithAlpha(static_cast<keel::u8>(50 + depthT * 120.0f));
+        const keel::f32 y = horizonY + depthT * roadH;
+        const keel::f32 lcx = laneCenterAt(depthT);
+        const keel::f32 hw = laneHalfWidthAt(depthT) * 0.42f;
+        const Color chevCol = pal.primaryAccent.WithAlpha(keel::as<keel::u8>(50 + depthT * 120.0f));
         canvas.DrawLine({lcx - hw, y + 4.0f * s}, {lcx, y}, chevCol, 1.5f * s);
         canvas.DrawLine({lcx, y}, {lcx + hw, y + 4.0f * s}, chevCol, 1.5f * s);
     }
 
     // Radar Lead Vehicle (scaled by adasLeadDistanceM in [10 .. 100 m])
     if (opts.adasLeadDetected) {
-        const float distM = keel::clamp(opts.adasLeadDistanceM, 8.0f, 110.0f);
-        const float distNorm = 1.0f - keel::clamp((distM - 8.0f) / 102.0f, 0.0f, 1.0f);
-        const float leadDepthT = 0.14f + distNorm * 0.46f;
-        const float leadY = horizonY + leadDepthT * roadH;
-        const float leadCx = laneCenterAt(leadDepthT);
-        const float carW = keel::clamp(bodyRect.w * (0.10f + leadDepthT * 0.22f), 22.0f * s, 72.0f * s);
-        const float carH = carW * 0.62f;
+        const keel::f32 distM = keel::clamp(opts.adasLeadDistanceM, 8.0f, 110.0f);
+        const keel::f32 distNorm = 1.0f - keel::clamp((distM - 8.0f) / 102.0f, 0.0f, 1.0f);
+        const keel::f32 leadDepthT = 0.14f + distNorm * 0.46f;
+        const keel::f32 leadY = horizonY + leadDepthT * roadH;
+        const keel::f32 leadCx = laneCenterAt(leadDepthT);
+        const keel::f32 carW = keel::clamp(bodyRect.w * (0.10f + leadDepthT * 0.22f), 22.0f * s, 72.0f * s);
+        const keel::f32 carH = carW * 0.62f;
 
         const Color radarCol = (distM < 18.0f) ? pal.dangerRed : ((distM < 32.0f) ? pal.warningAmber : pal.ecoGreen);
 
@@ -882,16 +882,16 @@ void RenderAdasLaneRadarPage(
         char distBuf[32]{};
         const keel::StringRef distRef = keel::format_buf(distBuf, "%.0fm · %.0f %s",
                       distM, DisplaySpeed(opts.adasLeadSpeedKmh, opts.speedUnit), SpeedUnitLabel(opts.speedUnit));
-        const float badgeW = keel::min(bodyRect.w - 8.0f * s, 102.0f * s);
+        const keel::f32 badgeW = keel::min(bodyRect.w - 8.0f * s, 102.0f * s);
         const Rect badgeR(leadCx - badgeW * 0.5f, keel::max(bodyRect.y + 4.0f * s, cabinBody.y - 18.0f * s), badgeW, 15.0f * s);
         canvas.DrawRoundRect(badgeR, 4.0f * s, Color(9, 14, 24, 220), radarCol, 1.0f * s);
         canvas.DrawTextBox(distRef, badgeR, 9.0f * s, radarCol, 0.5f, 0.5f);
     }
 
     // Foreground Ego Vehicle Silhouette (with active brake lights & turn signals!)
-    const float egoW = keel::clamp(bodyRect.w * 0.34f, 44.0f * s, 92.0f * s);
-    const float egoH = egoW * 0.56f;
-    const float egoY = botY - 6.0f * s;
+    const keel::f32 egoW = keel::clamp(bodyRect.w * 0.34f, 44.0f * s, 92.0f * s);
+    const keel::f32 egoH = egoW * 0.56f;
+    const keel::f32 egoY = botY - 6.0f * s;
     const Rect egoLower(cx - egoW * 0.5f, egoY - egoH * 0.55f, egoW, egoH * 0.52f);
     const Rect egoCabin(cx - egoW * 0.35f, egoY - egoH * 0.96f, egoW * 0.70f, egoH * 0.46f);
 
@@ -940,18 +940,18 @@ void RenderTpmsChassisPage(
     const Rect& bodyRect,
     const CarClusterViewOptions& opts,
     const ClusterPalette& pal,
-    float s
+    keel::f32 s
 ) noexcept {
     canvas.PushClip(bodyRect);
 
     const Vec2 c = bodyRect.Center();
-    const float chW = keel::min(bodyRect.w * 0.26f, 56.0f * s);
-    const float chH = keel::min(bodyRect.h * 0.62f, 118.0f * s);
+    const keel::f32 chW = keel::min(bodyRect.w * 0.26f, 56.0f * s);
+    const keel::f32 chH = keel::min(bodyRect.h * 0.62f, 118.0f * s);
     const Rect chassisRect(c.x - chW * 0.5f, c.y - chH * 0.5f - 6.0f * s, chW, chH);
 
     // Axles & Drivetrain spine
-    const float frontAxleY = chassisRect.y + chH * 0.22f;
-    const float rearAxleY  = chassisRect.y + chH * 0.78f;
+    const keel::f32 frontAxleY = chassisRect.y + chH * 0.22f;
+    const keel::f32 rearAxleY  = chassisRect.y + chH * 0.78f;
     canvas.DrawLine({chassisRect.x - 10.0f * s, frontAxleY}, {chassisRect.Right() + 10.0f * s, frontAxleY}, pal.dialRim, 2.0f * s);
     canvas.DrawLine({chassisRect.x - 10.0f * s, rearAxleY},  {chassisRect.Right() + 10.0f * s, rearAxleY},  pal.dialRim, 2.0f * s);
     canvas.DrawLine({c.x, frontAxleY}, {c.x, rearAxleY}, pal.primaryAccent.WithAlpha(180), 2.5f * s);
@@ -969,8 +969,8 @@ void RenderTpmsChassisPage(
     const char* wheelNames[4] = {"FL", "FR", "RL", "RR"};
 
     for (keel::i32 i = 0; i < 4; ++i) {
-        const float bar = opts.tirePressureBar[static_cast<keel::usize>(i)];
-        const float tmpC = opts.tireTempC[static_cast<keel::usize>(i)];
+        const keel::f32 bar = opts.tirePressureBar[keel::as<keel::usize>(i)];
+        const keel::f32 tmpC = opts.tireTempC[keel::as<keel::usize>(i)];
         const bool warn = (bar < 2.0f || bar > 3.1f || tmpC > 85.0f);
         const Color wCol = warn ? pal.warningAmber : pal.ecoGreen;
 
@@ -979,10 +979,10 @@ void RenderTpmsChassisPage(
 
         // Callout card on Left or Right side
         const bool isLeft = (i % 2 == 0);
-        const float cardW = keel::max(54.0f * s, (bodyRect.w - chW) * 0.40f);
-        const float cardH = 34.0f * s;
-        const float cardX = isLeft ? (bodyRect.x + 6.0f * s) : (bodyRect.Right() - 6.0f * s - cardW);
-        const float cardY = wheelCenters[i].y - cardH * 0.5f;
+        const keel::f32 cardW = keel::max(54.0f * s, (bodyRect.w - chW) * 0.40f);
+        const keel::f32 cardH = 34.0f * s;
+        const keel::f32 cardX = isLeft ? (bodyRect.x + 6.0f * s) : (bodyRect.Right() - 6.0f * s - cardW);
+        const keel::f32 cardY = wheelCenters[i].y - cardH * 0.5f;
         const Rect cardR(cardX, cardY, cardW, cardH);
 
         canvas.DrawRoundRect(cardR, 4.0f * s, pal.cardBg, wCol.WithAlpha(150), 1.0f * s);
@@ -1000,7 +1000,7 @@ void RenderTpmsChassisPage(
 
     // Bottom AWD Torque Split & Oil/Batt Temp Summary
     char splitBuf[48]{};
-    const float frontPct = keel::clamp(opts.frontTorquePct, 0.0f, 100.0f);
+    const keel::f32 frontPct = keel::clamp(opts.frontTorquePct, 0.0f, 100.0f);
     const keel::StringRef splitRef = keel::format_buf(splitBuf, "AWD SPLIT: F %.0f%% / R %.0f%%", frontPct, 100.0f - frontPct);
     canvas.DrawTextBox(
         splitRef,
@@ -1019,11 +1019,11 @@ void RenderGForceDynamicsPage(
     const Rect& bodyRect,
     const CarClusterViewOptions& opts,
     const ClusterPalette& pal,
-    float s
+    keel::f32 s
 ) noexcept {
     canvas.PushClip(bodyRect);
 
-    const float gRadius = keel::min(bodyRect.w * 0.36f, bodyRect.h * 0.34f);
+    const keel::f32 gRadius = keel::min(bodyRect.w * 0.36f, bodyRect.h * 0.34f);
     const Vec2 gCenter{bodyRect.Center().x, bodyRect.y + gRadius + 14.0f * s};
 
     // Concentric G rings: 0.5G, 1.0G, 1.5G
@@ -1034,13 +1034,13 @@ void RenderGForceDynamicsPage(
     canvas.DrawLine({gCenter.x, gCenter.y - gRadius}, {gCenter.x, gCenter.y + gRadius}, pal.tickMinor, 0.9f * s);
 
     // Live G-Vector puck (max scale = 1.5 G)
-    const float normX = keel::clamp(opts.latG / 1.5f, -1.0f, 1.0f);
-    const float normY = keel::clamp(-opts.lonG / 1.5f, -1.0f, 1.0f);
+    const keel::f32 normX = keel::clamp(opts.latG / 1.5f, -1.0f, 1.0f);
+    const keel::f32 normY = keel::clamp(-opts.lonG / 1.5f, -1.0f, 1.0f);
     const Vec2 puck{gCenter.x + normX * gRadius, gCenter.y + normY * gRadius};
     canvas.DrawLine(gCenter, puck, pal.primaryAccent, 2.0f * s);
     DrawCircleRing(canvas, puck, 5.0f * s, pal.dangerRed, pal.textBright, 1.4f * s);
 
-    const float totalG = keel::hypot(opts.latG, opts.lonG);
+    const keel::f32 totalG = keel::hypot(opts.latG, opts.lonG);
     char gBuf[48]{};
     const keel::StringRef gRef = keel::format_buf(gBuf, "%.2f G  (PEAK %.2f G)", totalG, keel::max(totalG, opts.peakG));
     canvas.DrawTextBox(
@@ -1053,12 +1053,12 @@ void RenderGForceDynamicsPage(
     );
 
     // Pedal Bars: Throttle (Green/Cyan) & Brake (Crimson)
-    const float barsY = gCenter.y + gRadius + 22.0f * s;
-    const float barW = bodyRect.w - 24.0f * s;
-    const float barX = bodyRect.x + 12.0f * s;
+    const keel::f32 barsY = gCenter.y + gRadius + 22.0f * s;
+    const keel::f32 barW = bodyRect.w - 24.0f * s;
+    const keel::f32 barX = bodyRect.x + 12.0f * s;
     if (barsY + 34.0f * s <= bodyRect.Bottom() && barW > 40.0f) {
-        const float thrFrac = keel::clamp(opts.throttlePct * 0.01f, 0.0f, 1.0f);
-        const float brkFrac = keel::clamp(opts.brakePct * 0.01f, 0.0f, 1.0f);
+        const keel::f32 thrFrac = keel::clamp(opts.throttlePct * 0.01f, 0.0f, 1.0f);
+        const keel::f32 brkFrac = keel::clamp(opts.brakePct * 0.01f, 0.0f, 1.0f);
 
         const Rect thrTrack(barX, barsY, barW, 8.0f * s);
         canvas.DrawRoundRect(thrTrack, 3.0f * s, Color(24, 34, 48, 200), pal.cardBorder, 0.8f * s);
@@ -1092,15 +1092,15 @@ void RenderCenterMfd(
     const Rect& mfdRect,
     const CarClusterViewOptions& opts,
     const ClusterPalette& pal,
-    float roadPhase,
-    float s
+    keel::f32 roadPhase,
+    keel::f32 s
 ) noexcept {
     if (mfdRect.w < 90.0f || mfdRect.h < 80.0f) return;
 
     canvas.DrawRoundRect(mfdRect, 10.0f * s, pal.cardBg, pal.cardBorder, 1.2f * s);
 
-    const float headerH = 22.0f * s;
-    const float footerH = 18.0f * s;
+    const keel::f32 headerH = 22.0f * s;
+    const keel::f32 footerH = 18.0f * s;
     const Rect headerRect(mfdRect.x, mfdRect.y, mfdRect.w, headerH);
     const Rect footerRect(mfdRect.x, mfdRect.Bottom() - footerH, mfdRect.w, footerH);
     const Rect bodyRect(mfdRect.x + 2.0f * s, mfdRect.y + headerH, mfdRect.w - 4.0f * s, keel::max(10.0f, mfdRect.h - headerH - footerH));
@@ -1127,16 +1127,16 @@ void RenderCenterMfd(
     }
 
     // Bottom Page Dots ([ADAS] [TPMS] [G-METER])
-    const float dotW = 18.0f * s;
-    const float dotH = 5.0f * s;
-    const float dotGap = 6.0f * s;
-    const float totalDotsW = dotW * 3.0f + dotGap * 2.0f;
-    const float startX = footerRect.Center().x - totalDotsW * 0.5f;
-    const float dotY = footerRect.Center().y - dotH * 0.5f;
+    const keel::f32 dotW = 18.0f * s;
+    const keel::f32 dotH = 5.0f * s;
+    const keel::f32 dotGap = 6.0f * s;
+    const keel::f32 totalDotsW = dotW * 3.0f + dotGap * 2.0f;
+    const keel::f32 startX = footerRect.Center().x - totalDotsW * 0.5f;
+    const keel::f32 dotY = footerRect.Center().y - dotH * 0.5f;
 
     for (keel::i32 i = 0; i < 3; ++i) {
-        const bool isCurrent = (static_cast<keel::i32>(opts.centerMfd) == i);
-        const Rect dr(startX + static_cast<float>(i) * (dotW + dotGap), dotY, dotW, dotH);
+        const bool isCurrent = (keel::as<keel::i32>(opts.centerMfd) == i);
+        const Rect dr(startX + keel::as<keel::f32>(i) * (dotW + dotGap), dotY, dotW, dotH);
         canvas.DrawRoundRect(dr, dotH * 0.5f, isCurrent ? pal.primaryAccent : Color(51, 65, 85, 160));
     }
 }
@@ -1149,14 +1149,14 @@ void RenderTrackLeftWing(
     const Rect& wingRect,
     const CarClusterViewOptions& opts,
     const ClusterPalette& pal,
-    float s
+    keel::f32 s
 ) noexcept {
     canvas.DrawRoundRect(wingRect, 10.0f * s, pal.cardBg, pal.cardBorder, 1.2f * s);
     canvas.PushClip(wingRect.Inset(6.0f * s));
 
-    const float x = wingRect.x + 12.0f * s;
-    const float w = keel::max(20.0f, wingRect.w - 24.0f * s);
-    float y = wingRect.y + 10.0f * s;
+    const keel::f32 x = wingRect.x + 12.0f * s;
+    const keel::f32 w = keel::max(20.0f, wingRect.w - 24.0f * s);
+    keel::f32 y = wingRect.y + 10.0f * s;
 
     // 1. Digital Speed & ACC Card
     canvas.DrawTextBox("GROUND SPEED", Rect(x, y, w, 14.0f * s), 9.0f * s, pal.textMuted, 0.0f, 0.5f);
@@ -1176,7 +1176,7 @@ void RenderTrackLeftWing(
     // 2. Boost / Power Horizontal Bar
     const bool isIce = (opts.powertrain == PowertrainMode::IceTurbo);
     char boostLbl[48]{};
-    float boostFrac = 0.0f;
+    keel::f32 boostFrac = 0.0f;
     keel::StringRef boostRef{};
     if (isIce) {
         boostRef = keel::format_buf(boostLbl, "TURBO BOOST  %+.2f bar", opts.boostBar);
@@ -1202,7 +1202,7 @@ void RenderTrackLeftWing(
     );
     canvas.DrawTextBox(t1Ref, Rect(x, y, w, 14.0f * s), 9.2f * s, pal.textSecondary, 0.0f, 0.5f);
     y += 15.0f * s;
-    const float cFrac = keel::clamp((opts.coolantOrBattTempC - 30.0f) / 95.0f, 0.0f, 1.0f);
+    const keel::f32 cFrac = keel::clamp((opts.coolantOrBattTempC - 30.0f) / 95.0f, 0.0f, 1.0f);
     canvas.DrawRoundRect(Rect(x, y, w, 7.0f * s), 3.0f * s, Color(24, 34, 48, 220), pal.cardBorder, 0.8f * s);
     canvas.DrawRoundRect(Rect(x, y, w * cFrac, 7.0f * s), 3.0f * s, pal.secondaryAccent);
     y += 15.0f * s;
@@ -1216,7 +1216,7 @@ void RenderTrackLeftWing(
     );
     canvas.DrawTextBox(t2Ref, Rect(x, y, w, 14.0f * s), 9.2f * s, pal.textSecondary, 0.0f, 0.5f);
     y += 15.0f * s;
-    const float oFrac = keel::clamp((opts.oilTempC - 40.0f) / 100.0f, 0.0f, 1.0f);
+    const keel::f32 oFrac = keel::clamp((opts.oilTempC - 40.0f) / 100.0f, 0.0f, 1.0f);
     canvas.DrawRoundRect(Rect(x, y, w, 7.0f * s), 3.0f * s, Color(24, 34, 48, 220), pal.cardBorder, 0.8f * s);
     canvas.DrawRoundRect(Rect(x, y, w * oFrac, 7.0f * s), 3.0f * s, pal.warningAmber);
     y += 16.0f * s;
@@ -1233,7 +1233,7 @@ void RenderTrackLeftWing(
     );
     canvas.DrawTextBox(fRef, Rect(x, y, w, 14.0f * s), 9.2f * s, pal.textSecondary, 0.0f, 0.5f);
     y += 15.0f * s;
-    const float fFrac = keel::clamp(opts.fuelOrSocPct * 0.01f, 0.0f, 1.0f);
+    const keel::f32 fFrac = keel::clamp(opts.fuelOrSocPct * 0.01f, 0.0f, 1.0f);
     canvas.DrawRoundRect(Rect(x, y, w, 7.0f * s), 3.0f * s, Color(24, 34, 48, 220), pal.cardBorder, 0.8f * s);
     canvas.DrawRoundRect(Rect(x, y, w * fFrac, 7.0f * s), 3.0f * s, pal.ecoGreen);
 
@@ -1248,7 +1248,7 @@ void RenderBottomTripBar(
     const Rect& botRect,
     const CarClusterViewOptions& opts,
     const ClusterPalette& pal,
-    float s
+    keel::f32 s
 ) noexcept {
     if (botRect.w < 160.0f || botRect.h < 18.0f) return;
 
@@ -1261,16 +1261,16 @@ void RenderBottomTripBar(
     };
     const char* kModeChars[6] = {"P", "R", "N", "D", "S", "M"};
 
-    const float cellW = 24.0f * s;
-    const float cellH = keel::min(botRect.h - 4.0f * s, 18.0f * s);
-    const float gap = 4.0f * s;
-    const float totalW = cellW * 6.0f + gap * 5.0f;
-    const float startX = botRect.Center().x - totalW * 0.5f;
-    const float cy = botRect.Center().y - cellH * 0.5f;
+    const keel::f32 cellW = 24.0f * s;
+    const keel::f32 cellH = keel::min(botRect.h - 4.0f * s, 18.0f * s);
+    const keel::f32 gap = 4.0f * s;
+    const keel::f32 totalW = cellW * 6.0f + gap * 5.0f;
+    const keel::f32 startX = botRect.Center().x - totalW * 0.5f;
+    const keel::f32 cy = botRect.Center().y - cellH * 0.5f;
 
     for (keel::i32 i = 0; i < 6; ++i) {
         const bool active = (opts.gearSelector == kModes[i]);
-        const Rect cr(startX + static_cast<float>(i) * (cellW + gap), cy, cellW, cellH);
+        const Rect cr(startX + keel::as<keel::f32>(i) * (cellW + gap), cy, cellW, cellH);
         if (active) {
             canvas.DrawRoundRect(cr, 4.0f * s, pal.primaryAccent, pal.textBright, 1.0f * s);
         }
@@ -1291,7 +1291,7 @@ void RenderBottomTripBar(
         opts.avgConsumption,
         (opts.powertrain == PowertrainMode::ElectricDualMotor) ? "kWh/100" : "L/100"
     );
-    const float sideW = keel::max(0.0f, startX - botRect.x - 16.0f * s);
+    const keel::f32 sideW = keel::max(0.0f, startX - botRect.x - 16.0f * s);
     if (sideW > 60.0f * s) {
         canvas.DrawTextBox(leftRef, Rect(botRect.x + 10.0f * s, botRect.y, sideW, botRect.h), 9.5f * s, pal.textSecondary, 0.0f, 0.5f);
     }
@@ -1303,7 +1303,7 @@ void RenderBottomTripBar(
         "TRIP %.1f %s   ·   ODO %06.0f %s",
         DisplayDistance(opts.tripDistanceKm, opts.speedUnit),
         DistUnitLabel(opts.speedUnit),
-        DisplayDistance(static_cast<float>(opts.odometerKm), opts.speedUnit),
+        DisplayDistance(keel::as<keel::f32>(opts.odometerKm), opts.speedUnit),
         DistUnitLabel(opts.speedUnit)
     );
     if (sideW > 60.0f * s) {
@@ -1317,38 +1317,38 @@ void RenderBottomTripBar(
 void ResolveClusterStageRects(
     const Rect& ctrlRect,
     const CarClusterViewOptions& opts,
-    float s,
+    keel::f32 s,
     Rect& outLeftGauge,
     Rect& outCenterMfd,
     Rect& outRightGauge
 ) noexcept {
-    float topY = ctrlRect.y + 6.0f * s;
-    float botY = ctrlRect.Bottom() - 6.0f * s;
+    keel::f32 topY = ctrlRect.y + 6.0f * s;
+    keel::f32 botY = ctrlRect.Bottom() - 6.0f * s;
     if (opts.showShiftLights && (botY - topY) > 160.0f) topY += 12.0f * s;
     if (opts.showTelltaleBar && (botY - topY) > 140.0f) topY += 26.0f * s;
     if (opts.showBottomTripBar && (botY - topY) > 140.0f) botY -= 30.0f * s;
 
-    const float stageX = ctrlRect.x + 10.0f * s;
-    const float stageW = keel::max(40.0f, ctrlRect.w - 20.0f * s);
-    const float stageH = keel::max(40.0f, botY - topY);
-    const float gap = 10.0f * s;
+    const keel::f32 stageX = ctrlRect.x + 10.0f * s;
+    const keel::f32 stageW = keel::max(40.0f, ctrlRect.w - 20.0f * s);
+    const keel::f32 stageH = keel::max(40.0f, botY - topY);
+    const keel::f32 gap = 10.0f * s;
 
     if (opts.layoutMode == ClusterLayoutMode::DualDial) {
-        const float dialSize = keel::min(stageH, (stageW - gap * 2.0f) * 0.36f);
-        const float mfdW = keel::max(90.0f, stageW - dialSize * 2.0f - gap * 2.0f);
+        const keel::f32 dialSize = keel::min(stageH, (stageW - gap * 2.0f) * 0.36f);
+        const keel::f32 mfdW = keel::max(90.0f, stageW - dialSize * 2.0f - gap * 2.0f);
         outLeftGauge  = Rect(stageX, topY, dialSize, stageH);
         outCenterMfd  = Rect(stageX + dialSize + gap, topY + 4.0f * s, mfdW, stageH - 8.0f * s);
         outRightGauge = Rect(stageX + stageW - dialSize, topY, dialSize, stageH);
     } else if (opts.layoutMode == ClusterLayoutMode::TrackCentral) {
-        const float centerDialW = keel::min(stageH * 1.04f, stageW * 0.40f);
-        const float wingW = keel::max(80.0f, (stageW - centerDialW - gap * 2.0f) * 0.5f);
+        const keel::f32 centerDialW = keel::min(stageH * 1.04f, stageW * 0.40f);
+        const keel::f32 wingW = keel::max(80.0f, (stageW - centerDialW - gap * 2.0f) * 0.5f);
         outLeftGauge  = Rect(stageX, topY + 4.0f * s, wingW, stageH - 8.0f * s);
         outCenterMfd  = Rect(stageX + wingW + gap, topY, centerDialW, stageH);
         outRightGauge = Rect(stageX + stageW - wingW, topY + 4.0f * s, wingW, stageH - 8.0f * s);
     } else {
         // ModernWide: slightly compact side dials (28% each) + wide panoramic MFD (44%)
-        const float dialSize = keel::min(stageH * 0.92f, (stageW - gap * 2.0f) * 0.28f);
-        const float mfdW = keel::max(120.0f, stageW - dialSize * 2.0f - gap * 2.0f);
+        const keel::f32 dialSize = keel::min(stageH * 0.92f, (stageW - gap * 2.0f) * 0.28f);
+        const keel::f32 mfdW = keel::max(120.0f, stageW - dialSize * 2.0f - gap * 2.0f);
         outLeftGauge  = Rect(stageX, topY, dialSize, stageH);
         outCenterMfd  = Rect(stageX + dialSize + gap, topY + 2.0f * s, mfdW, stageH - 4.0f * s);
         outRightGauge = Rect(stageX + stageW - dialSize, topY, dialSize, stageH);
@@ -1365,25 +1365,25 @@ void RenderCarClusterViewNode(const Node* node, ICanvas& canvas, const UiTheme& 
     const Rect ctrlRect = node->computedRect;
     if (ctrlRect.w <= 16.0f || ctrlRect.h <= 16.0f) return;
 
-    constexpr float s = 1.0f;
+    constexpr keel::f32 s = 1.0f;
     const ClusterPalette pal = ResolveClusterPalette(opts.driveTheme);
-    const float outerRadius = opts.border.radius.has_value()
+    const keel::f32 outerRadius = opts.border.radius.has_value()
         ? *opts.border.radius
         : 14.0f;
     const Color binnacleBg = opts.background.Resolve(node->hovered, node->pressed, node->disabled, pal.binnacleBg);
     const Color binnacleBorder = opts.border.color.Resolve(node->hovered, node->pressed, node->disabled, pal.binnacleBorder);
-    const float borderW = (opts.border.width > 0.0f) ? opts.border.width : 1.5f;
+    const keel::f32 borderW = (opts.border.width > 0.0f) ? opts.border.width : 1.5f;
 
     // Outer automotive binnacle frame
     canvas.DrawRoundRect(ctrlRect, outerRadius, binnacleBg, binnacleBorder, borderW);
     canvas.PushClip(ctrlRect.Inset(keel::max(1.0f, borderW)));
 
-    float topY = ctrlRect.y + 6.0f * s;
-    float botY = ctrlRect.Bottom() - 6.0f * s;
+    keel::f32 topY = ctrlRect.y + 6.0f * s;
+    keel::f32 botY = ctrlRect.Bottom() - 6.0f * s;
 
     // 1. Top Shift-Lights Strip
     if (opts.showShiftLights && (botY - topY) > 160.0f) {
-        const float slW = keel::min(ctrlRect.w * 0.46f, 320.0f * s);
+        const keel::f32 slW = keel::min(ctrlRect.w * 0.46f, 320.0f * s);
         const Rect slRect(ctrlRect.Center().x - slW * 0.5f, topY, slW, 10.0f * s);
         RenderShiftLightStrip(canvas, slRect, opts, pal, s);
         topY += 12.0f * s;
@@ -1398,7 +1398,7 @@ void RenderCarClusterViewNode(const Node* node, ICanvas& canvas, const UiTheme& 
 
     // 3. Bottom PRNDSM & Trip Bar
     if (opts.showBottomTripBar && (botY - topY) > 140.0f) {
-        const float barH = 24.0f * s;
+        const keel::f32 barH = 24.0f * s;
         const Rect tripRect(ctrlRect.x + 10.0f * s, botY - barH, ctrlRect.w - 20.0f * s, barH);
         RenderBottomTripBar(canvas, tripRect, opts, pal, s);
         botY -= (barH + 6.0f * s);
@@ -1449,15 +1449,15 @@ Vec2 CarClusterView::Measure(
     UiSize /*size*/,
     ICanvas* /*canvas*/,
     const UiTheme& /*theme*/,
-    float availableWidth
+    keel::f32 availableWidth
 ) {
-    float defaultW = 760.0f;
+    keel::f32 defaultW = 760.0f;
     if (opts.width.IsFixed()) {
         defaultW = opts.width.Dp();
     } else if (opts.width.ResolveMode(SizeMode::Stretch) == SizeMode::Stretch && availableWidth > 0.0f) {
         defaultW = availableWidth;
     }
-    const float defaultH = opts.height.IsFixed()
+    const keel::f32 defaultH = opts.height.IsFixed()
         ? opts.height.Dp()
         : 340.0f;
     return {defaultW, defaultH};
@@ -1472,7 +1472,7 @@ CarClusterViewResponse CarClusterView::Run(
     const Id id = ctx.MakeChildId(loc);
     const bool isDisabled = opts.disabled || ctx.IsDisabled();
     const UiSize effectiveSize = opts.size;
-    constexpr float s = 1.0f;
+    constexpr keel::f32 s = 1.0f;
 
     Response baseRes = ctx.Interact(id);
     CarClusterViewResponse resp{};
@@ -1482,8 +1482,8 @@ CarClusterViewResponse CarClusterView::Run(
 
     auto& state = ctx.GetOrCreatePersistentState<CarClusterViewState>(id);
     // Advance animated road scroll phase proportionally to vehicle speed
-    const float speedMps = keel::max(0.0f, opts.speedKmh) / 3.6f;
-    state.roadScrollPhase = keel::fmod(state.roadScrollPhase + static_cast<double>(speedMps) * 0.0018, 1.0);
+    const keel::f32 speedMps = keel::max(0.0f, opts.speedKmh) / 3.6f;
+    state.roadScrollPhase = keel::fmod(state.roadScrollPhase + keel::as<keel::f64>(speedMps) * 0.0018, 1.0);
 
     Rect prevBounds = baseRes.rect;
     if (prevBounds.w <= 1.0f || prevBounds.h <= 1.0f) {
@@ -1509,8 +1509,8 @@ CarClusterViewResponse CarClusterView::Run(
 
         if (hovered) {
             const Vec2 center = ctrlRect.Center();
-            const float nx = keel::clamp((mouse.x - center.x) / keel::max(1.0f, ctrlRect.w * 0.45f), -1.0f, 1.0f);
-            const float ny = keel::clamp((mouse.y - center.y) / keel::max(1.0f, ctrlRect.h * 0.42f), -1.0f, 1.0f);
+            const keel::f32 nx = keel::clamp((mouse.x - center.x) / keel::max(1.0f, ctrlRect.w * 0.45f), -1.0f, 1.0f);
+            const keel::f32 ny = keel::clamp((mouse.y - center.y) / keel::max(1.0f, ctrlRect.h * 0.42f), -1.0f, 1.0f);
             resp.cursorNorm = {nx, ny};
             resp.cursorSteerDeg = nx * 45.0f;
             if (ny < -0.04f) {
@@ -1525,7 +1525,7 @@ CarClusterViewResponse CarClusterView::Run(
             const Rect mfdHit = (opts.layoutMode == ClusterLayoutMode::TrackCentral) ? resp.rightGaugeRect : resp.centerMfdRect;
             if (baseRes.clicked && mfdHit.Contains(mouse)) {
                 if (opts.centerMfdPtr) {
-                    const keel::i32 nextPage = (static_cast<keel::i32>(*opts.centerMfdPtr) + 1) % 3;
+                    const keel::i32 nextPage = (keel::as<keel::i32>(*opts.centerMfdPtr) + 1) % 3;
                     *opts.centerMfdPtr = static_cast<ClusterCenterMfd>(nextPage);
                     resp.activeCenterMfd = *opts.centerMfdPtr;
                     resp.changed = true;
@@ -1533,7 +1533,7 @@ CarClusterViewResponse CarClusterView::Run(
             }
 
             // Mouse wheel shifts manual gear 1..8
-            const float wheelY = ctx.GetMouseWheel().y;
+            const keel::f32 wheelY = ctx.GetMouseWheel().y;
             if (keel::abs(wheelY) > 0.01f && opts.manualGearPtr) {
                 const keel::i32 step = (wheelY > 0.0f) ? 1 : -1;
                 const keel::i32 newGear = keel::clamp(*opts.manualGearPtr + step, 1, 8);
@@ -1551,7 +1551,7 @@ CarClusterViewResponse CarClusterView::Run(
         ctx.SetTooltip(opts.tooltip, baseRes.rect);
     }
 
-    Node* node = ctx.CreateNode(static_cast<NodeType>(static_cast<keel::u16>(NodeType::User) + 11u), id);
+    Node* node = ctx.CreateNode(static_cast<NodeType>(keel::as<keel::u16>(NodeType::User) + 11u), id);
     auto* payload = ctx.AllocPayload<CarClusterViewPayload>();
     payload->opts = opts;
     payload->opts.tooltip = ctx.AllocText(opts.tooltip);
@@ -1562,12 +1562,12 @@ CarClusterViewResponse CarClusterView::Run(
         payload->opts.currentGear = *opts.manualGearPtr;
     }
     payload->resp = resp;
-    payload->roadPhase = static_cast<float>(state.roadScrollPhase);
+    payload->roadPhase = keel::as<keel::f32>(state.roadScrollPhase);
 
     node->text = "CarClusterView";
     node->SetPayload(payload);
 
-    const keel::u16 telltaleMask = static_cast<keel::u16>(
+    const keel::u16 telltaleMask = keel::as<keel::u16>(
         (payload->opts.telltales.leftTurn             ? (1u << 0)  : 0u) |
         (payload->opts.telltales.rightTurn            ? (1u << 1)  : 0u) |
         (payload->opts.telltales.hazard               ? (1u << 2)  : 0u) |
@@ -1586,12 +1586,12 @@ CarClusterViewResponse CarClusterView::Run(
     );
 
     node->visualHash = detail::HashArgs(
-        static_cast<keel::u8>(payload->opts.layoutMode),
-        static_cast<keel::u8>(payload->opts.powertrain),
-        static_cast<keel::u8>(payload->opts.driveTheme),
-        static_cast<keel::u8>(payload->opts.centerMfd),
-        static_cast<keel::u8>(payload->opts.speedUnit),
-        static_cast<keel::u8>(payload->opts.gearSelector),
+        keel::as<keel::u8>(payload->opts.layoutMode),
+        keel::as<keel::u8>(payload->opts.powertrain),
+        keel::as<keel::u8>(payload->opts.driveTheme),
+        keel::as<keel::u8>(payload->opts.centerMfd),
+        keel::as<keel::u8>(payload->opts.speedUnit),
+        keel::as<keel::u8>(payload->opts.gearSelector),
         payload->opts.speedKmh,
         payload->opts.maxSpeedKmh,
         payload->opts.cruiseTargetKmh,
@@ -1639,7 +1639,7 @@ CarClusterViewResponse CarClusterView::Run(
         isDisabled
     );
 
-    node->measureFn = [](const Node* n, float availableWidth, ICanvas* c, const UiTheme& th) noexcept -> Vec2 {
+    node->measureFn = [](const Node* n, keel::f32 availableWidth, ICanvas* c, const UiTheme& th) noexcept -> Vec2 {
         const auto* p = n->As<CarClusterViewPayload>();
         if (!p) return {0.0f, 0.0f};
         CarClusterViewOptions effOpts = p->opts;

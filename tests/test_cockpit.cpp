@@ -42,16 +42,16 @@ void TestAttitudeViewWidgetWorkflow() {
     keel::Array<keel::u32> pixels(width * height);
     canvas.SetTarget(pixels.data(), width, height, width);
 
-    float fovPitch = 50.0f;
+    keel::f32 fovPitch = 50.0f;
     AttitudeDisplayMode mode = AttitudeDisplayMode::FullPFD;
     HorizonReferenceMode refMode = HorizonReferenceMode::WesternMovingHorizon;
     AttitudeColorScheme scheme = AttitudeColorScheme::GlassCockpit;
-    float roll = 28.0f;
-    float pitch = 12.5f;
+    keel::f32 roll = 28.0f;
+    keel::f32 pitch = 12.5f;
     AttitudeViewResponse resp{};
 
     auto renderFrame = [&]() {
-        ui.BeginFrame({static_cast<float>(width), static_cast<float>(height)});
+        ui.BeginFrame({keel::as<keel::f32>(width), keel::as<keel::f32>(height)});
         if (auto col = ui.Column({
             .padding = Padding::All(12.0f),
             .width = SizeMode::Stretch,
@@ -149,7 +149,7 @@ void TestCarClusterViewWidgetWorkflow() {
     CarClusterViewResponse resp{};
 
     auto renderFrame = [&]() {
-        ui.BeginFrame({static_cast<float>(width), static_cast<float>(height)});
+        ui.BeginFrame({keel::as<keel::f32>(width), keel::as<keel::f32>(height)});
         if (auto col = ui.Column({
             .padding = Padding::All(12.0f),
             .width = SizeMode::Stretch,

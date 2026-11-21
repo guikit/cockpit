@@ -89,40 +89,40 @@ struct CarClusterViewOptions {
     GearSelector gearSelector{GearSelector::Drive};
 
     // --- Primary Speed, RPM / Power & Drivetrain Telemetry ---
-    float speedKmh{96.0f};              ///< Vehicle ground speed in km/h (automatically converted when `speedUnit == Mph`)
-    float maxSpeedKmh{300.0f};          ///< Full-scale speedometer dial maximum in km/h (200 .. 360)
-    float cruiseTargetKmh{110.0f};      ///< Adaptive Cruise Control (ACC) target speed bug in km/h
+    keel::f32 speedKmh{96.0f};              ///< Vehicle ground speed in km/h (automatically converted when `speedUnit == Mph`)
+    keel::f32 maxSpeedKmh{300.0f};          ///< Full-scale speedometer dial maximum in km/h (200 .. 360)
+    keel::f32 cruiseTargetKmh{110.0f};      ///< Adaptive Cruise Control (ACC) target speed bug in km/h
     bool cruiseSet{true};               ///< Render ACC speed bug on speedometer arc
-    float rpm{2850.0f};                 ///< Engine speed in RPM (0 .. maxRpm) for `PowertrainMode::IceTurbo`
-    float redlineRpm{7000.0f};          ///< Redline threshold in RPM where warning ticks & shift lights engage
-    float maxRpm{8500.0f};              ///< Full-scale tachometer maximum in RPM (6000 .. 10000)
+    keel::f32 rpm{2850.0f};                 ///< Engine speed in RPM (0 .. maxRpm) for `PowertrainMode::IceTurbo`
+    keel::f32 redlineRpm{7000.0f};          ///< Redline threshold in RPM where warning ticks & shift lights engage
+    keel::f32 maxRpm{8500.0f};              ///< Full-scale tachometer maximum in RPM (6000 .. 10000)
     keel::i32 currentGear{5};                 ///< Active forward gear ratio (1 .. 8) when in D / S / M
-    float evPowerKw{48.0f};             ///< Electric motor net power in kW (-150 kW Regen .. +450 kW Power)
-    float throttlePct{22.0f};           ///< Accelerator pedal position in % (0 .. 100)
-    float brakePct{0.0f};               ///< Brake pedal pressure in % (0 .. 100)
-    float steeringAngleDeg{0.0f};       ///< Steering wheel angle in degrees (-45 .. +45, negative = left, positive = right)
-    float boostBar{0.35f};              ///< Turbocharger relative boost pressure in bar (-0.6 .. +2.0 bar)
+    keel::f32 evPowerKw{48.0f};             ///< Electric motor net power in kW (-150 kW Regen .. +450 kW Power)
+    keel::f32 throttlePct{22.0f};           ///< Accelerator pedal position in % (0 .. 100)
+    keel::f32 brakePct{0.0f};               ///< Brake pedal pressure in % (0 .. 100)
+    keel::f32 steeringAngleDeg{0.0f};       ///< Steering wheel angle in degrees (-45 .. +45, negative = left, positive = right)
+    keel::f32 boostBar{0.35f};              ///< Turbocharger relative boost pressure in bar (-0.6 .. +2.0 bar)
 
     // --- Energy, Thermal & Trip Computer Telemetry ---
-    float fuelOrSocPct{76.0f};          ///< Fuel tank level or HV battery State of Charge (SoC) in % (0 .. 100)
-    float estimatedRangeKm{445.0f};     ///< Remaining driving range in km
-    float coolantOrBattTempC{90.0f};    ///< Engine coolant or HV battery pack temperature in °C
-    float oilTempC{98.0f};              ///< Engine / transmission oil temperature in °C
-    float outsideTempC{18.5f};          ///< Ambient exterior temperature in °C
-    double odometerKm{18420.6};         ///< Total vehicle odometer in km
-    float tripDistanceKm{74.8f};        ///< Current trip distance in km
-    float avgConsumption{9.4f};         ///< Average consumption (L/100km for ICE, kWh/100km for EV)
+    keel::f32 fuelOrSocPct{76.0f};          ///< Fuel tank level or HV battery State of Charge (SoC) in % (0 .. 100)
+    keel::f32 estimatedRangeKm{445.0f};     ///< Remaining driving range in km
+    keel::f32 coolantOrBattTempC{90.0f};    ///< Engine coolant or HV battery pack temperature in °C
+    keel::f32 oilTempC{98.0f};              ///< Engine / transmission oil temperature in °C
+    keel::f32 outsideTempC{18.5f};          ///< Ambient exterior temperature in °C
+    keel::f64 odometerKm{18420.6};         ///< Total vehicle odometer in km
+    keel::f32 tripDistanceKm{74.8f};        ///< Current trip distance in km
+    keel::f32 avgConsumption{9.4f};         ///< Average consumption (L/100km for ICE, kWh/100km for EV)
 
     // --- Chassis Dynamics, ADAS Radar & TPMS Telemetry ---
-    float latG{0.0f};                   ///< Lateral acceleration in G (-1.8 .. +1.8 G)
-    float lonG{0.0f};                   ///< Longitudinal acceleration in G (-1.8 .. +1.8 G, positive = accel, negative = brake)
-    float peakG{0.45f};                 ///< Peak combined G-load recorded during session
-    float frontTorquePct{32.0f};        ///< AWD front axle torque distribution in % (0 .. 100)
-    float adasLeadDistanceM{44.0f};     ///< Radar distance to lead vehicle in meters (5 .. 120 m)
-    float adasLeadSpeedKmh{96.0f};      ///< Lead vehicle speed in km/h
+    keel::f32 latG{0.0f};                   ///< Lateral acceleration in G (-1.8 .. +1.8 G)
+    keel::f32 lonG{0.0f};                   ///< Longitudinal acceleration in G (-1.8 .. +1.8 G, positive = accel, negative = brake)
+    keel::f32 peakG{0.45f};                 ///< Peak combined G-load recorded during session
+    keel::f32 frontTorquePct{32.0f};        ///< AWD front axle torque distribution in % (0 .. 100)
+    keel::f32 adasLeadDistanceM{44.0f};     ///< Radar distance to lead vehicle in meters (5 .. 120 m)
+    keel::f32 adasLeadSpeedKmh{96.0f};      ///< Lead vehicle speed in km/h
     bool adasLeadDetected{true};        ///< Whether a lead vehicle is locked by front radar
-    keel::StaticArray<float, 4> tirePressureBar{2.4f, 2.4f, 2.6f, 2.6f}; ///< Tire pressures [FL, FR, RL, RR] in bar
-    keel::StaticArray<float, 4> tireTempC{44.0f, 45.0f, 48.0f, 48.0f};   ///< Tire temperatures [FL, FR, RL, RR] in °C
+    keel::StaticArray<keel::f32, 4> tirePressureBar{2.4f, 2.4f, 2.6f, 2.6f}; ///< Tire pressures [FL, FR, RL, RR] in bar
+    keel::StaticArray<keel::f32, 4> tireTempC{44.0f, 45.0f, 48.0f, 48.0f};   ///< Tire temperatures [FL, FR, RL, RR] in °C
 
     // --- Sub-Instrument & Overlay Visibility Toggles ---
     bool showShiftLights{true};         ///< Render top RPM / Power sequential LED shift-light strip
@@ -156,9 +156,9 @@ struct CarClusterViewResponse : public Response {
 
     bool cursorInside{false};           ///< True when mouse cursor is inside the cluster viewport
     Vec2 cursorNorm{0.0f, 0.0f};        ///< Normalized cursor offset from center in [-1.0, +1.0] (X = steer, Y = pedal)
-    float cursorSteerDeg{0.0f};         ///< Steering angle mapped from cursor X (-45 .. +45 deg)
-    float cursorThrottlePct{0.0f};      ///< Throttle pedal % mapped from cursor Y above center (0 .. 100 %)
-    float cursorBrakePct{0.0f};         ///< Brake pedal % mapped from cursor Y below center (0 .. 100 %)
+    keel::f32 cursorSteerDeg{0.0f};         ///< Steering angle mapped from cursor X (-45 .. +45 deg)
+    keel::f32 cursorThrottlePct{0.0f};      ///< Throttle pedal % mapped from cursor Y above center (0 .. 100 %)
+    keel::f32 cursorBrakePct{0.0f};         ///< Brake pedal % mapped from cursor Y below center (0 .. 100 %)
 };
 
 /// Autonomous Digital Automotive Instrument Cluster & ADAS/Telemetry Cockpit widget.
@@ -175,7 +175,7 @@ public:
         UiSize size,
         ICanvas* canvas = nullptr,
         const UiTheme& theme = {},
-        float availableWidth = 0.0f
+        keel::f32 availableWidth = 0.0f
     );
 };
 
