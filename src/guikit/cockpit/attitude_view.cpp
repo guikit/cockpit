@@ -250,31 +250,15 @@ void DrawConvexPolygonFilled(ICanvas& canvas, keel::ArrayRef<Vec2> poly, Color f
     return true;
 }
 
-void DrawCircleOutline(ICanvas& canvas, Vec2 center, keel::f32 radius, Color stroke, keel::f32 strokeWidth = 1.5f, keel::i32 steps = 36) noexcept {
+void DrawCircleOutline(ICanvas& canvas, Vec2 center, keel::f32 radius, Color stroke, keel::f32 strokeWidth = 1.5f, keel::i32 /*steps*/ = 36) noexcept {
     if (radius <= 0.5f || stroke.a == 0) return;
-    Vec2 prev{center.x + radius, center.y};
-    for (keel::i32 i = 1; i <= steps; ++i) {
-        const keel::f32 a = (keel::as<keel::f32>(i) / steps) * keel::kTauF;
-        const Vec2 curr{center.x + keel::cos(a) * radius, center.y + keel::sin(a) * radius};
-        canvas.DrawLine(prev, curr, stroke, strokeWidth);
-        prev = curr;
-    }
+    canvas.DrawArc(center, radius, 0.0f, keel::kTauF, stroke, strokeWidth, /*roundCaps=*/false);
 }
 
-void DrawFilledCircle(ICanvas& canvas, Vec2 center, keel::f32 radius, Color fill, Color stroke = Color::Transparent(), keel::f32 strokeWidth = 0.0f, keel::i32 steps = 28) noexcept {
+void DrawFilledCircle(ICanvas& canvas, Vec2 center, keel::f32 radius, Color fill, Color stroke = Color::Transparent(), keel::f32 strokeWidth = 0.0f, keel::i32 /*steps*/ = 28) noexcept {
     if (radius <= 0.5f) return;
-    if (fill.a > 0) {
-        Vec2 prev{center.x + radius, center.y};
-        for (keel::i32 i = 1; i <= steps; ++i) {
-            const keel::f32 a = (keel::as<keel::f32>(i) / steps) * keel::kTauF;
-            const Vec2 curr{center.x + keel::cos(a) * radius, center.y + keel::sin(a) * radius};
-            canvas.DrawTriangle(center, prev, curr, fill);
-            prev = curr;
-        }
-    }
-    if (stroke.a > 0 && strokeWidth > 0.0f) {
-        DrawCircleOutline(canvas, center, radius, stroke, strokeWidth, steps);
-    }
+    const Rect r(center.x - radius, center.y - radius, radius * 2.0f, radius * 2.0f);
+    canvas.DrawRoundRect(r, radius, fill, stroke, strokeWidth);
 }
 
 void DrawQuadFilled(ICanvas& canvas, Vec2 p0, Vec2 p1, Vec2 p2, Vec2 p3, Color fill, Color stroke = Color::Transparent(), keel::f32 strokeW = 1.0f) noexcept {

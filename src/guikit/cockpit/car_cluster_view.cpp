@@ -152,23 +152,18 @@ void DrawCircularArc(
     keel::f32 endDeg,
     Color color,
     keel::f32 thickness,
-    keel::i32 segments = 36
+    keel::i32 /*segments*/ = 36
 ) noexcept {
-    if (radius <= 1.0f || keel::abs(endDeg - startDeg) < 0.2f || segments < 2) return;
-    const keel::f32 step = (endDeg - startDeg) / keel::as<keel::f32>(segments);
-    Vec2 prev{
-        center.x + keel::cos(keel::deg_to_rad(startDeg)) * radius,
-        center.y + keel::sin(keel::deg_to_rad(startDeg)) * radius
-    };
-    for (keel::i32 i = 1; i <= segments; ++i) {
-        const keel::f32 deg = startDeg + step * keel::as<keel::f32>(i);
-        const Vec2 cur{
-            center.x + keel::cos(keel::deg_to_rad(deg)) * radius,
-            center.y + keel::sin(keel::deg_to_rad(deg)) * radius
-        };
-        canvas.DrawLine(prev, cur, color, thickness);
-        prev = cur;
-    }
+    if (radius <= 1.0f || keel::abs(endDeg - startDeg) < 0.2f) return;
+    canvas.DrawArc(
+        center,
+        radius,
+        keel::deg_to_rad(startDeg),
+        keel::deg_to_rad(endDeg),
+        color,
+        thickness,
+        /*roundCaps=*/true
+    );
 }
 
 /// Draws a glowing tapered instrument needle from `center` toward `angleDeg`.
