@@ -1475,7 +1475,7 @@ AttitudeViewResponse AttitudeView::Run(
         ctx.SetTooltip(opts.tooltip, baseRes.rect);
     }
 
-    Node* node = ctx.CreateNode(static_cast<NodeType>(keel::as<keel::u16>(NodeType::User) + 10u), id);
+    Node* node = ctx.CreateNode(keel::from_underlying<NodeType>(keel::as<keel::u16>(NodeType::User) + 10u), id);
     auto* payload = ctx.AllocPayload<AttitudeViewPayload>();
     payload->opts = opts;
     payload->opts.tooltip = ctx.AllocText(opts.tooltip);

@@ -1526,7 +1526,7 @@ CarClusterViewResponse CarClusterView::Run(
             if (baseRes.clicked && mfdHit.Contains(mouse)) {
                 if (opts.centerMfdPtr) {
                     const keel::i32 nextPage = (keel::as<keel::i32>(*opts.centerMfdPtr) + 1) % 3;
-                    *opts.centerMfdPtr = static_cast<ClusterCenterMfd>(nextPage);
+                    *opts.centerMfdPtr = keel::from_underlying<ClusterCenterMfd>(nextPage);
                     resp.activeCenterMfd = *opts.centerMfdPtr;
                     resp.changed = true;
                 }
@@ -1551,7 +1551,7 @@ CarClusterViewResponse CarClusterView::Run(
         ctx.SetTooltip(opts.tooltip, baseRes.rect);
     }
 
-    Node* node = ctx.CreateNode(static_cast<NodeType>(keel::as<keel::u16>(NodeType::User) + 11u), id);
+    Node* node = ctx.CreateNode(keel::from_underlying<NodeType>(keel::as<keel::u16>(NodeType::User) + 11u), id);
     auto* payload = ctx.AllocPayload<CarClusterViewPayload>();
     payload->opts = opts;
     payload->opts.tooltip = ctx.AllocText(opts.tooltip);
