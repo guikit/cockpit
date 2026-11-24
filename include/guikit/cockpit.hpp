@@ -16,7 +16,8 @@ inline AttitudeViewResponse AttitudeView(
     const AttitudeViewOptions& opts = {},
     keel::SourceLocation loc = keel::SourceLocation::current()
 ) {
-    return ui.Run<guikit::AttitudeView>(opts, loc);
+    WidgetExecGuard guard(ui);
+    return guikit::AttitudeView::Run(ui, opts, loc);
 }
 
 /// Renders an Automotive Digital Instrument Cluster & ADAS Cockpit widget.
@@ -25,7 +26,8 @@ inline CarClusterViewResponse CarClusterView(
     const CarClusterViewOptions& opts = {},
     keel::SourceLocation loc = keel::SourceLocation::current()
 ) {
-    return ui.Run<guikit::CarClusterView>(opts, loc);
+    WidgetExecGuard guard(ui);
+    return guikit::CarClusterView::Run(ui, opts, loc);
 }
 
 } // namespace guikit::cockpit

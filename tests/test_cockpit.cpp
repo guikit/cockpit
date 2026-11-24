@@ -52,7 +52,7 @@ void TestAttitudeViewWidgetWorkflow() {
 
     auto renderFrame = [&]() {
         ui.BeginFrame({keel::as<keel::f32>(width), keel::as<keel::f32>(height)});
-        if (auto col = ui.Column({
+        if (auto col = guikit::Column(ui, {
             .padding = Padding::All(12.0f),
             .width = SizeMode::Stretch,
             .height = SizeMode::Stretch
@@ -150,7 +150,7 @@ void TestCarClusterViewWidgetWorkflow() {
 
     auto renderFrame = [&]() {
         ui.BeginFrame({keel::as<keel::f32>(width), keel::as<keel::f32>(height)});
-        if (auto col = ui.Column({
+        if (auto col = guikit::Column(ui, {
             .padding = Padding::All(12.0f),
             .width = SizeMode::Stretch,
             .height = SizeMode::Stretch
